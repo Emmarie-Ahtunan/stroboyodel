@@ -1,40 +1,37 @@
-import pygame
-import math
+import streamlit as st
+import numpy as np
+import sounddevice as sd
 
-# Initialize Pygame
-pygame.init()
+# Set the sampling frequency and duration for each sound
+fs = 44100  # 44.1 kHz
+duration = 0.1  # in seconds
 
-# Set the screen dimensions (not relevant for sound)
-width, height = 800, 600
-screen = pygame.display.set_mode((width, height))
-
-# Set the clock for controlling the frame rate
-clock = pygame.time.Clock()
-
-# Set the frequency and duration for each sound
-frequency = 440
-duration = 100  # in milliseconds
-
-# Main loop
-running = True
-x = 0
-
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
+# Function to generate and play the sound
+def play_sound(x):
     # Calculate the sound frequency based on your formula
-    sound_frequency = int(440 + 220 * math.sin(x**2))
+    sound_frequency = 440 + 220 * np.sin(x**2)
+
+    # Generate a time array
+    t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+
+    # Generate the sound wave
+    wave = 0.5 * np.sin(2 * np.pi * sound_frequency * t)
 
     # Play the sound
-    pygame.mixer.Sound(frequency, duration).play()
+    sd.play(wave, fs)
+    sd.wait()
+
+# Streamlit app
+st.title("Sound Synchronization Example")
+
+# Create a button to trigger the sound update
+if st.button("Play Sound"):
+    x = 0
+    play_sound(x)
 
     # Update the x value for the next iteration
     x += 0.01
 
-    # Cap the frame rate
-    clock.tick(60)
+    st.text("Sound played!")
 
-# Quit Pygame
-pygame.quit()
+# Note: This will play the sound each time the button is clicked.
