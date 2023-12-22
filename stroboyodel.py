@@ -1,37 +1,54 @@
 import streamlit as st
 import numpy as np
-import sounddevice as sd
+import matplotlib.pyplot as plt
+from matplotlib import animation
 
-# Set the sampling frequency and duration for each sound
-fs = 44100  # 44.1 kHz
-duration = 0.1  # in seconds
+# Streamlit app content
+st.title("Sine Wave Animation")
 
-# Function to generate and play the sound
-def play_sound(x):
-    # Calculate the sound frequency based on your formula
-    sound_frequency = 440 + 220 * np.sin(x**2)
+# Slider widgets for user input
+start = st.slider("Start", min_value=0.0, max_value=float(400), step=10.0)
+stop = st.slider("Stop", min_value=0.0, max_value=float(400), step=10.0)
+step = st.slider("Step", min_value=0.25, max_value=1.0, step=0.01)
+pixel_size = st.slider("Pixel Size", min_value=1, max_value=4, step=1)
 
-    # Generate a time array
-    t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+# Create a figure and axis
+fig, ax = plt.subplots()
+line, = ax.plot([], [], 'o', markersize=pixel_size)
 
-    # Generate the sound wave
-    wave = 0.5 * np.sin(2 * np.pi * sound_frequency * t)
+# Animation initialization function
+def init():
+    line.set_data([], [])
+    return (line,)
 
-    # Play the sound
-    sd.play(wave, fs)
-    sd.wait()
+# Set the axis limits
+ax.set_xlim(0, 2 * np.pi)
+ax.set_ylim(-1, 1)
 
-# Streamlit app
-st.title("Sound Synchronization Example")
+# Main animation function
+def animate(frame):
+    i = start + frame * step
+    x = np.linspace(0, 2 * np.pi, 1000)
+    y = np.sin(x + i)
+    line.set_data(x, y)
+    return (line,)
 
-# Create a button to trigger the sound update
-if st.button("Play Sound"):
-    x = 0
-    play_sound(x)
+# Calculate the number of frames as an integer
+num_frames = max(int((stop - start) / step), 1)
 
-    # Update the x value for the next iteration
-    x += 0.01
+# Collect frames in a list
+frames = []
+for frame in range(num_frames):
+    animate(frame)
+    fig.canvas.draw()
+    image = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+    image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    frames.append(image)
 
-    st.text("Sound played!")
+# Display the animation frames in Streamlit
+for frame in frames:
+    st.image(frame)
 
-# Note: This will play the sound each time the button is clicked.
+# Start the Streamlit app
+if __name__ == "__main__":
+    st.write("Adjust sliders to control animation speed and pixel size.")
